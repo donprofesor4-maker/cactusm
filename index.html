@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Cactus Multimedia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Great+Vibes&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/lenis@1.3.23/dist/lenis.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+html,body{width:100%;height:100%;background:#040a05;overflow:hidden}
+
+/* ─── LOADING ─── */
+#loading{
+  position:fixed;inset:0;z-index:999;
+  display:grid;place-items:center;
+  background:#040a05;color:#fff;
+  transition:opacity 1s ease,visibility 1s ease
+}
+#loading.hidden{opacity:0;visibility:hidden;pointer-events:none}
+#loading .loader{width:36px;height:36px;border:2px solid rgba(255,255,255,.08);border-top-color:#4caf50;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1.2rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading p{font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:.35em;color:rgba(255,255,255,.3)}
+
+/* ─── LAYOUT ─── */
+.wrapper{position:relative;height:100svh;overflow:hidden}
+.content{will-change:transform;opacity:0;transition:opacity .8s ease}
+.content.loaded{opacity:1}
+
+/* ─── HERO COMMON ─── */
+.hero{position:relative;width:100vw;height:100svh;overflow:clip;display:grid;place-items:center}
+.hero-bg{position:absolute;inset:0;z-index:0}
+
+/* ─── PARALLAX IMAGE ─── */
+.hero-picture{position:absolute;inset:-30% 0;z-index:1}
+.hero-picture img{width:100%;height:100%;object-fit:cover;object-position:center;display:block}
+
+/* ─── VIGNETTE ─── */
+.vignette{position:absolute;inset:0;background:radial-gradient(ellipse 100% 100% at 50% 50%,transparent 45%,rgba(0,0,0,.45) 100%);z-index:2;pointer-events:none}
+
+/* ─── MICROCOSMOS CANVAS ─── */
+#microcanvas{position:fixed;inset:0;width:100%;height:100%;z-index:3;pointer-events:none;opacity:.35}
+
+/* ─── GRAIN ─── */
+.grain{position:absolute;inset:-50%;width:200%;height:200%;z-index:15;pointer-events:none;opacity:.04;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");animation:grain .5s steps(2) infinite}
+@keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(-2%,1%)}50%{transform:translate(1%,-2%)}75%{transform:translate(2%,2%)}100%{transform:translate(-1%,0)}}
+
+/* ─── DIAPHRAGM ─── */
+#diaphragm{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none;overflow:visible;opacity:.25}
+#diaphragm svg{width:100%;height:100%}
+
+/* ─── ARC TEXT ─── */
+.arc-svg{position:absolute;inset:0;width:100%;height:100%;z-index:20;overflow:visible;opacity:0;transition:opacity 1.2s ease}
+.arc-svg-script{position:absolute;inset:0;width:100%;height:100%;z-index:21;overflow:visible;pointer-events:none;opacity:0;transform:translateX(-120px);transition:opacity 1.4s ease,transform 1.4s cubic-bezier(.2,0,.1,1)}
+.arc-svg.visible{opacity:1}
+.arc-svg-script.visible{opacity:1;transform:translateX(0)}
+.arc-svg-script .tp-script{font-family:'Great Vibes',cursive;font-size:clamp(28px,5vw,72px);letter-spacing:4px}
+
+.tp-main{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,7vw,96px);fill:#fff;letter-spacing:6px}
+.tp-dot{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,7vw,96px);letter-spacing:2px}
+/* accent colors set per-section via style attr */
+
+/* ─── UI LABELS ─── */
+.hero-label{position:absolute;top:clamp(20px,3vh,32px);left:clamp(20px,3vw,40px);z-index:30;font-family:'Bebas Neue',sans-serif;font-size:clamp(10px,1.2vw,13px);letter-spacing:.3em;color:rgba(255,255,255,.3);opacity:0;animation:fade-up-simple .8s .3s forwards;pointer-events:none}
+.hint{position:absolute;top:clamp(20px,3vh,32px);right:clamp(20px,3vw,40px);z-index:30;font-family:'Bebas Neue',sans-serif;font-size:clamp(9px,1vw,11px);letter-spacing:.25em;color:rgba(255,255,255,.18);opacity:0;animation:fade-up-simple .8s 1s forwards;pointer-events:none}
+.hero-footer{position:absolute;bottom:clamp(20px,4vh,40px);left:50%;transform:translateX(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0;animation:fade-up 1s .8s forwards;pointer-events:none}
+.hero-footer p{font-family:'Bebas Neue',sans-serif;font-size:clamp(10px,1.2vw,13px);letter-spacing:.28em;color:rgba(255,255,255,.32);text-transform:uppercase}
+.scroll-line{width:1px;height:clamp(24px,4vh,40px);background:linear-gradient(to bottom,rgba(255,255,255,.35),transparent);animation:line-grow 1.5s 1.5s ease-in-out infinite alternate}
+
+/* ─── SECTION COUNTER ─── */
+.section-num{position:absolute;bottom:clamp(24px,4.5vh,44px);right:clamp(20px,3vw,40px);z-index:30;font-family:'Bebas Neue',sans-serif;font-size:clamp(9px,1vw,11px);letter-spacing:.3em;color:rgba(255,255,255,.18);pointer-events:none;opacity:0;animation:fade-up-simple .8s .5s forwards}
+
+/* ─── CUSTOM CURSOR ─── */
+@media(hover:hover){
+  .cursor-dot{position:fixed;width:8px;height:8px;border-radius:50%;background:#4caf50;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .3s,height .3s,background .3s,opacity .3s;opacity:0;mix-blend-mode:difference}
+  .cursor-ring{position:fixed;width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,.25);pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .3s,height .3s,border-color .3s,opacity .3s;opacity:0}
+  body:hover .cursor-dot,body:hover .cursor-ring{opacity:1}
+}
+
+/* ─── KEYFRAMES ─── */
+@keyframes line-grow{from{transform:scaleY(.4);opacity:.3}to{transform:scaleY(1);opacity:.9}}
+@keyframes fade-up{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes fade-up-simple{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── AUDIO TOGGLE ─── */
+#audio-toggle:hover{background:rgba(255,255,255,.08)!important;border-color:rgba(255,255,255,.2)!important}
+#audio-toggle:active{transform:scale(.92)}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div style="text-align:center">
+    <div class="loader"></div>
+    <p>CACTUS MULTIMEDIA</p>
+  </div>
+</div>
+
+<div class="cursor-dot" id="cursor-dot"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+
+<canvas id="microcanvas"></canvas>
+
+<div class="wrapper" id="wrapper">
+  <div class="content" id="content">
+
+    <!-- ─── SECCIÓN 1: CACTUS ─── -->
+    <section class="hero" id="s1" data-index="0" data-accent="#4caf50">
+      <div class="hero-bg" style="background:radial-gradient(ellipse 70% 85% at 55% 40%,#2a6b2a 0,#235e23 8%,#1a4a1a 18%,#143d14 28%,#0d2e0d 42%,#081f08 58%,#061506 72%,#040e04 85%,#040a05 100%)"></div>
+      <picture class="hero-picture">
+        <img src="https://images.pexels.com/photos/4656946/pexels-photo-4656946.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop" alt="" loading="eager" fetchpriority="high" id="hero-img-main">
+      </picture>
+      <div class="vignette"></div>
+
+      <svg id="diaphragm" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+        <g id="iris" transform="translate(720,450)" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.8" stroke-linecap="round"></g>
+      </svg>
+
+      <svg class="arc-svg" id="svg1" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+        <defs><path id="arcPath1" d="M -200,900 A 920,520 0 0,1 1640,900" fill="none"/></defs>
+        <text><textPath id="tp1" href="#arcPath1" startOffset="0%"></textPath></text>
+      </svg>
+      <svg class="arc-svg-script" id="svg2" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+        <defs><path id="arcPath2" d="M -200,900 A 920,480 0 0,1 1640,900" fill="none"/></defs>
+        <text><textPath id="tp2" href="#arcPath2" startOffset="0%"></textPath></text>
+      </svg>
+
+      <div class="grain"></div>
+      <div class="hero-label">Cactus Multimedia ✦ 2026</div>
+      <div class="hint">Scroll ↓</div>
+      <div class="hero-footer"><p>Scroll to explore</p><div class="scroll-line"></div></div>
+      <div class="section-num" id="section-num">01 / 03</div>
+    </section>
+
+    <!-- ─── SECCIÓN 2: FOTOGRAFÍA ─── -->
+    <section class="hero" id="s2" data-index="1" data-accent="#38b2ac">
+      <div class="hero-bg" style="background:radial-gradient(ellipse 80% 90% at 40% 50%,#1a4a4a 0,#1a4040 6%,#163535 14%,#0f2828 24%,#0a1f1f 36%,#071616 50%,#040e0e 66%,#020808 82%,#010505 100%)"></div>
+      <picture class="hero-picture">
+        <img src="https://images.pexels.com/photos/448375/pexels-photo-448375.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop" alt="" loading="eager">
+      </picture>
+      <div class="vignette"></div>
+
+      <svg class="arc-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+        <defs><path d="M -200,900 A 920,520 0 0,1 1640,900" fill="none"/></defs>
+        <text><textPath startOffset="0%"></textPath></text>
+      </svg>
+      <svg class="arc-svg-script" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+        <defs><path d="M -200,900 A 920,480 0 0,1 1640,900" fill="none"/></defs>
+        <text><textPath startOffset="0%"></textPath></text>
+      </svg>
+
+      <div class="grain"></div>
+      <div class="hero-label">Cactus Multimedia ✦ 2026</div>
+      <div style="position:absolute;z-index:20;text-align:center;pointer-events:none">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,7vw,96px);color:#fff;letter-spacing:.08em;line-height:1;">Fotografía</div>
+        <div style="font-family:'Great Vibes',cursive;font-size:clamp(20px,3.5vw,52px);color:#38b2ac;margin-top:8px;">Eventos · Graduaciones · Retratos</div>
+      </div>
+      <div class="section-num">02 / 03</div>
+    </section>
+
+    <!-- ─── SECCIÓN 3: MULTIMEDIA ─── -->
+    <section class="hero" id="s3" data-index="2" data-accent="#d97706">
+      <div class="hero-bg" style="background:radial-gradient(ellipse 80% 90% at 40% 50%,#4a2e1a 0,#402718 6%,#352214 14%,#281b0f 24%,#1f160a 36%,#161007 50%,#0e0904 66%,#080602 82%,#050401 100%)"></div>
+      <picture class="hero-picture">
+        <img src="s3-bg.jpg" alt="" loading="eager">
+      </picture>
+      <div class="vignette"></div>
+
+      <svg class="arc-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+        <defs><path d="M -200,900 A 920,520 0 0,1 1640,900" fill="none"/></defs>
+        <text><textPath startOffset="0%"></textPath></text>
+      </svg>
+      <svg class="arc-svg-script" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+        <defs><path d="M -200,900 A 920,480 0 0,1 1640,900" fill="none"/></defs>
+        <text><textPath startOffset="0%"></textPath></text>
+      </svg>
+
+      <div class="grain"></div>
+      <div class="hero-label">Cactus Multimedia ✦ 2026</div>
+      <div style="position:absolute;z-index:20;text-align:center;pointer-events:none">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,7vw,96px);color:#fff;letter-spacing:.08em;line-height:1;">Multimedia</div>
+        <div style="font-family:'Great Vibes',cursive;font-size:clamp(20px,3.5vw,52px);color:#d97706;margin-top:8px;">Video · Diseño · Contenido</div>
+      </div>
+      <div class="section-num">03 / 03</div>
+    </section>
+
+    <!-- ─── DUPLICADO S1 (loop) ─── -->
+    <section class="hero" aria-hidden="true" data-index="3">
+      <div class="hero-bg" style="background:radial-gradient(ellipse 70% 85% at 55% 40%,#2a6b2a 0,#235e23 8%,#1a4a1a 18%,#143d14 28%,#0d2e0d 42%,#081f08 58%,#061506 72%,#040e04 85%,#040a05 100%)"></div>
+      <picture class="hero-picture" aria-hidden="true">
+        <img src="https://images.pexels.com/photos/4656946/pexels-photo-4656946.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop" alt="" aria-hidden="true" loading="eager">
+      </picture>
+      <div class="vignette"></div>
+      <div class="grain"></div>
+    </section>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://unpkg.com/lenis@1.3.23/dist/lenis.min.js"></script>
+<script src="https://unpkg.com/lenis@1.3.23/dist/lenis-snap.min.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  /* ══════════════════════════════════════
+     LOADING
+     ══════════════════════════════════════ */
+  let loadingDone = false;
+  function hideLoading() {
+    if (loadingDone) return;
+    loadingDone = true;
+    const el = document.getElementById('loading');
+    if (el) el.classList.add('hidden');
+  }
+  // fallback: hide after 5s no matter what
+  setTimeout(hideLoading, 5000);
+
+  /* ══════════════════════════════════════
+     MARQUEE TEXT BUILD
+     ══════════════════════════════════════ */
+  const sections = document.querySelectorAll('.hero');
+  const marqueeData = [
+    { word: 'CACTUS', accent: '#4caf50', script: 'Fotografía · Video · Arte Digital', scriptAccent: '#4caf50' },
+    { word: 'FOTOGRAFÍA', accent: '#38b2ac', script: 'Eventos · Graduaciones · Retratos', scriptAccent: '#38b2ac' },
+    { word: 'MULTIMEDIA', accent: '#d97706', script: 'Video · Diseño · Contenido Creativo', scriptAccent: '#d97706' },
+  ];
+
+  /* We'll store textPath refs for sections that have arc-svg */
+  const marqueeRefs = [];
+
+  sections.forEach((sec, idx) => {
+    if (idx > 2) return; // skip duplicate
+    const data = marqueeData[idx];
+    const arcSvgs = sec.querySelectorAll('.arc-svg, .arc-svg-script');
+    if (arcSvgs.length < 2) return;
+
+    const mainTP = arcSvgs[0].querySelector('textPath');
+    const scriptTP = arcSvgs[1].querySelector('textPath');
+    if (!mainTP || !scriptTP) return;
+
+    // Build "CACTUS · MULTIMEDIA ·" repeating (idx 0) or just word repeating
+    let html = '';
+    if (idx === 0) {
+      const words = ['CACTUS', 'MULTIMEDIA'];
+      for (let i = 0; i < 16; i++) {
+        const isDot = (i % 3 === 2);
+        html += isDot
+          ? `<tspan class="tp-dot" fill="${data.accent}">\u00A0·\u00A0</tspan>`
+          : `<tspan class="tp-main">${words[i % 2]}\u00A0\u00A0</tspan>`;
+      }
+    } else {
+      for (let i = 0; i < 24; i++) {
+        const isDot = (i % 4 === 3);
+        html += isDot
+          ? `<tspan class="tp-dot" fill="${data.accent}">\u00A0✦\u00A0</tspan>`
+          : `<tspan class="tp-main">${data.word}\u00A0\u00A0</tspan>`;
+      }
+    }
+    mainTP.innerHTML = html.repeat(3);
+
+    let scriptHtml = '';
+    for (let i = 0; i < 20; i++) {
+      scriptHtml += `<tspan class="tp-script" fill="${data.scriptAccent}">${data.script}\u00A0\u00A0\u00A0</tspan>`;
+    }
+    scriptTP.innerHTML = scriptHtml.repeat(3);
+
+    marqueeRefs.push({
+      main: mainTP,
+      script: scriptTP,
+      mainArc: arcSvgs[0].querySelector('defs path'),
+      scriptArc: arcSvgs[1].querySelector('defs path'),
+      speed: 0.018 + idx * 0.004,
+      scriptSpeed: 0.011 + idx * 0.003,
+      offMain: -(idx * 11),
+      offScript: idx * 15,
+      lenMain: 0,
+      lenScript: 0,
+    });
+  });
+
+  function getOneThirdLength(tp) {
+    try { return (tp.getComputedTextLength ? tp.getComputedTextLength() : 0) / 3; }
+    catch(e) { return 0; }
+  }
+
+  /* ══════════════════════════════════════
+     MARQUEE ANIMATION (velocity-reactive)
+     ══════════════════════════════════════ */
+  let velocityFactor = 1;
+
+  function animateMarquee() {
+    marqueeRefs.forEach(ref => {
+      if (!ref.lenMain) ref.lenMain = getOneThirdLength(ref.main);
+      if (!ref.lenScript) ref.lenScript = getOneThirdLength(ref.script);
+
+      ref.offMain -= ref.speed * velocityFactor;
+      ref.offScript += ref.scriptSpeed * velocityFactor;
+
+      const vMain = ref.mainArc ? ref.mainArc.getTotalLength() : 0;
+      const vScript = ref.scriptArc ? ref.scriptArc.getTotalLength() : 0;
+
+      if (ref.lenMain > 0 && vMain > 0) {
+        const pct = (ref.lenMain / vMain) * 100;
+        if (ref.offMain < -pct) ref.offMain += pct;
+      } else if (ref.offMain < -33) ref.offMain += 33;
+
+      if (ref.lenScript > 0 && vScript > 0) {
+        const pct = (ref.lenScript / vScript) * 100;
+        if (ref.offScript > pct) ref.offScript -= pct;
+      } else if (ref.offScript > 33) ref.offScript -= 33;
+
+      ref.main.setAttribute('startOffset', ref.offMain + '%');
+      ref.script.setAttribute('startOffset', ref.offScript + '%');
+    });
+    requestAnimationFrame(animateMarquee);
+  }
+
+  /* ══════════════════════════════════════
+     LENIS + GSAP
+     ══════════════════════════════════════ */
+  function setupScroll() {
+    gsap.registerPlugin(ScrollTrigger);
+
+    const wrapper = document.getElementById('wrapper');
+    const content = document.getElementById('content');
+
+    const lenis = new Lenis({
+      infinite: true,
+      wrapper: wrapper,
+      content: content,
+    });
+
+    const snap = new Snap(lenis, {
+      type: 'mandatory',
+      debounce: 500,
+      duration: 0.9,
+      easing: (t) => 1 - Math.pow(1 - t, 4),
+    });
+    snap.addElements(document.querySelectorAll('section'), { align: 'start' });
+
+    ScrollTrigger.scrollerProxy(wrapper, {
+      scrollTop(value) {
+        if (arguments.length) { lenis.scrollTo(value, { immediate: true }); }
+        else { return lenis.scroll; }
+      },
+      getBoundingClientRect() {
+        return { top: 0, left: 0, width: wrapper.clientWidth, height: wrapper.clientHeight };
+      },
+      pinType: 'transform',
+    });
+
+    lenis.on('scroll', (e) => {
+      ScrollTrigger.update();
+      velocityFactor = 1 + Math.min(Math.abs(e.velocity) * 0.03, 3);
+      scrollBoost = Math.min(Math.abs(e.velocity) * 0.5, 8);
+    });
+
+    // Update section counter on snap
+    let lastSnapIdx = -1;
+    lenis.on('scroll', (e) => {
+      if (e.progress == null) return;
+      // rough section from progress
+      const totalReal = 3; // 3 real sections
+      const rawIdx = Math.round(e.progress * totalReal) % totalReal;
+      const snapIdx = rawIdx < 0 ? rawIdx + totalReal : rawIdx;
+      if (snapIdx !== lastSnapIdx) {
+        lastSnapIdx = snapIdx;
+        const nums = document.querySelectorAll('.section-num');
+        nums.forEach((el, i) => {
+          if (i <= 2) {
+            el.textContent = String(snapIdx + 1).padStart(2, '0') + ' / 03';
+          }
+        });
+        // update cursor color
+        updateCursorAccent(snapIdx);
+      }
+    });
+
+    gsap.ticker.add((time) => lenis.raf(time * 1000));
+    gsap.ticker.lagSmoothing(0);
+
+    // Parallax
+    document.querySelectorAll('.hero-picture').forEach(pic => {
+      if (!pic.querySelector('img')) return;
+      gsap.set(pic, { yPercent: -50 });
+      gsap.fromTo(pic,
+        { yPercent: -50 },
+        {
+          yPercent: 50,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: pic.closest('.hero'),
+            scroller: wrapper,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: true,
+          }
+        }
+      );
+    });
+
+    return lenis;
+  }
+
+  /* ══════════════════════════════════════
+     DIAPHRAGM (responsive)
+     ══════════════════════════════════════ */
+  function buildDiaphragm() {
+    const g = document.getElementById('iris');
+    if (!g) return;
+    g.innerHTML = '';
+    const paths = [];
+    const W = window.innerWidth;
+    const scale = Math.min(W / 1440, 1);
+    const R = 290 * scale;
+    const OPENING = 90 * scale;
+    const BLADES = 7;
+
+    for (let b = 0; b < BLADES; b++) {
+      const baseAngle = (b / BLADES) * Math.PI * 2;
+      const sweep = (Math.PI * 2) / BLADES;
+      const aStart = baseAngle, aEnd = baseAngle + sweep * 1.65, aMid = (aStart + aEnd) / 2;
+      const p0x = Math.cos(aStart) * R * 0.95, p0y = Math.sin(aStart) * R * 0.95;
+      const p3x = Math.cos(aEnd) * R * 0.78,   p3y = Math.sin(aEnd) * R * 0.78;
+      const p1x = Math.cos(aStart + sweep * 0.3) * OPENING * 1.15;
+      const p1y = Math.sin(aStart + sweep * 0.3) * OPENING * 1.15;
+      const p2x = Math.cos(aEnd - sweep * 0.3) * OPENING * 1.15;
+      const p2y = Math.sin(aEnd - sweep * 0.3) * OPENING * 1.15;
+      const cx = Math.cos(aMid) * R, cy = Math.sin(aMid) * R;
+      const cix = Math.cos(aMid) * OPENING * 0.95, ciy = Math.sin(aMid) * OPENING * 0.95;
+      const d = `M ${p0x.toFixed(1)},${p0y.toFixed(1)} Q ${cx.toFixed(1)},${cy.toFixed(1)} ${p3x.toFixed(1)},${p3y.toFixed(1)} L ${p2x.toFixed(1)},${p2y.toFixed(1)} Q ${cix.toFixed(1)},${ciy.toFixed(1)} ${p1x.toFixed(1)},${p1y.toFixed(1)} Z`;
+      const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+      p.setAttribute('d', d); p.setAttribute('stroke-width','2'); p.setAttribute('stroke-opacity','0.9'); p.setAttribute('fill','none');
+      g.appendChild(p); paths.push(p);
+    }
+
+    [[R+12,'3.5','1'],[R+28,'1','0.4'],[OPENING-8,'1.5','0.6']].forEach(([r,sw,so]) => {
+      const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('cx',0); c.setAttribute('cy',0); c.setAttribute('r',r);
+      c.setAttribute('stroke-width',sw); c.setAttribute('stroke-opacity',so);
+      g.appendChild(c); paths.push(c);
+    });
+
+    for (let t = 0; t < 48; t++) {
+      const a = (t/48)*Math.PI*2, major = t%8===0;
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',(Math.cos(a)*(R+14)).toFixed(1)); line.setAttribute('y1',(Math.sin(a)*(R+14)).toFixed(1));
+      line.setAttribute('x2',(Math.cos(a)*(R+(major?30:22))).toFixed(1)); line.setAttribute('y2',(Math.sin(a)*(R+(major?30:22))).toFixed(1));
+      line.setAttribute('stroke-width', major?'1.8':'0.8'); line.setAttribute('stroke-opacity', major?'0.9':'0.35');
+      g.appendChild(line); paths.push(line);
+    }
+
+    paths.forEach(p => {
+      const L = p.getTotalLength ? p.getTotalLength() : 600;
+      p.setAttribute('stroke-dasharray', L); p.setAttribute('stroke-dashoffset', L);
+    });
+    g.getBoundingClientRect();
+
+    paths.forEach((p, i) => {
+      const L = p.getTotalLength ? p.getTotalLength() : 600;
+      const dur = 3.5 + L / 450, del = 0.15 + i * 0.2;
+      p.style.transition = `stroke-dashoffset ${dur.toFixed(2)}s cubic-bezier(.15,0,.05,1) ${del.toFixed(2)}s`;
+      requestAnimationFrame(() => p.setAttribute('stroke-dashoffset', '0'));
+    });
+  }
+
+  /* ══════════════════════════════════════
+     CURSOR
+     ══════════════════════════════════════ */
+  let cursorAccent = '#4caf50';
+  const dotEl = document.getElementById('cursor-dot');
+  const ringEl = document.getElementById('cursor-ring');
+
+  function updateCursorAccent(idx) {
+    const accents = ['#4caf50','#38b2ac','#d97706'];
+    cursorAccent = accents[idx] || '#4caf50';
+    if (dotEl) dotEl.style.background = cursorAccent;
+    if (ringEl) ringEl.style.borderColor = cursorAccent + '66';
+  }
+
+  if (dotEl && ringEl && window.matchMedia('(hover:hover)').matches) {
+    document.addEventListener('mousemove', (e) => {
+      dotEl.style.left = e.clientX + 'px';
+      dotEl.style.top = e.clientY + 'px';
+      ringEl.style.left = e.clientX + 'px';
+      ringEl.style.top = e.clientY + 'px';
+    });
+    document.addEventListener('mousedown', () => {
+      dotEl.style.width = '12px'; dotEl.style.height = '12px';
+      ringEl.style.width = '40px'; ringEl.style.height = '40px';
+    });
+    document.addEventListener('mouseup', () => {
+      dotEl.style.width = '8px'; dotEl.style.height = '8px';
+      ringEl.style.width = '32px'; ringEl.style.height = '32px';
+    });
+  }
+
+  /* ══════════════════════════════════════
+     RESIZE
+     ══════════════════════════════════════ */
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      ScrollTrigger.refresh();
+      buildDiaphragm();
+    }, 300);
+  });
+
+  /* ══════════════════════════════════════
+     INIT
+     ══════════════════════════════════════ */
+  let initStarted = false;
+  function tryInit() {
+    if (initStarted) return;
+    initStarted = true;
+    hideLoading();
+
+    marqueeRefs.forEach(ref => {
+      ref.lenMain = getOneThirdLength(ref.main);
+      ref.lenScript = getOneThirdLength(ref.script);
+    });
+
+    const content = document.getElementById('content');
+    if (content) content.classList.add('loaded');
+
+    animateMarquee();
+    const lenis = setupScroll();
+    window.lenis = lenis;
+
+    document.querySelectorAll('.arc-svg').forEach(el => el.classList.add('visible'));
+    document.querySelectorAll('.arc-svg-script').forEach(el => el.classList.add('visible'));
+    setTimeout(buildDiaphragm, 400);
+  }
+
+  document.fonts.ready.then(() => {
+    // wait for main image
+    const img = document.getElementById('hero-img-main');
+    if (img && !img.complete) {
+      img.addEventListener('load', tryInit);
+      img.addEventListener('error', tryInit);
+    } else {
+      tryInit();
+    }
+  });
+
+  /* ══════════════════════════════════════
+     MICROCOSMOS CANVAS
+     ══════════════════════════════════════ */
+  const microCanvas = document.getElementById('microcanvas');
+  const mCtx = microCanvas.getContext('2d');
+  let mW, mH, microCells = [];
+  let scrollBoost = 0;
+
+  function resizeMicro() {
+    mW = microCanvas.width = window.innerWidth;
+    mH = microCanvas.height = window.innerHeight;
+  }
+  resizeMicro();
+
+  const COLORS = [
+    { bg: '10,20,10', cell: '76,175,80', nucleus: '150,220,150' },
+    { bg: '10,20,20', cell: '56,178,172', nucleus: '130,220,215' },
+    { bg: '20,15,8',  cell: '217,119,6',  nucleus: '255,190,80' },
+  ];
+
+  class MicroCell {
+    constructor(idx) {
+      this.idx = idx;
+      this.reset();
+    }
+    reset() {
+      const c = COLORS[this.idx % 3];
+      this.x = Math.random() * mW;
+      this.y = Math.random() * mH;
+      this.r = 8 + Math.random() * 36;
+      this.vx = (Math.random() - .5) * .15;
+      this.vy = (Math.random() - .5) * .15;
+      this.phase = Math.random() * Math.PI * 2;
+      this.freq = .003 + Math.random() * .007;
+      this.amp = .1 + Math.random() * .25;
+      this.pulsePhase = Math.random() * Math.PI * 2;
+      this.pulseSpeed = .005 + Math.random() * .01;
+      this.pulseAmp = .05 + Math.random() * .15;
+      this.color = c;
+      this.opacity = .08 + Math.random() * .2;
+      this.nucleusR = 2 + Math.random() * 5;
+    }
+    update() {
+      this.phase += this.freq;
+      this.pulsePhase += this.pulseSpeed;
+      const wobble = Math.sin(this.phase) * this.amp;
+      const pulse = 1 + Math.sin(this.pulsePhase) * this.pulseAmp;
+      this.x += this.vx + wobble + Math.cos(this.phase * .7) * .02;
+      this.y += this.vy + Math.cos(this.phase * .5) * .02 + wobble * .3;
+      // scroll boost
+      this.x += this.vx * scrollBoost * 2;
+      this.y += this.vy * scrollBoost * 2;
+      // wrap
+      if (this.x < -this.r) this.x = mW + this.r;
+      if (this.x > mW + this.r) this.x = -this.r;
+      if (this.y < -this.r) this.y = mH + this.r;
+      if (this.y > mH + this.r) this.y = -this.r;
+      return pulse;
+    }
+    draw(pulse) {
+      const ctx = mCtx;
+      const r = this.r * pulse;
+      // glow
+      const grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, r * 2);
+      grad.addColorStop(0, `rgba(${this.color.cell},${this.opacity * .3})`);
+      grad.addColorStop(1, `rgba(${this.color.cell},0)`);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, r * 2, 0, Math.PI * 2);
+      ctx.fill();
+      // cell body
+      ctx.fillStyle = `rgba(${this.color.cell},${this.opacity})`;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
+      ctx.fill();
+      // nucleus
+      ctx.fillStyle = `rgba(${this.color.nucleus},${this.opacity * .4})`;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.nucleusR * pulse, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function initMicrocosmos() {
+    microCells = [];
+    const count = Math.min(40, Math.round(mW * mH / 40000));
+    for (let i = 0; i < count; i++) {
+      microCells.push(new MicroCell(i));
+    }
+  }
+  initMicrocosmos();
+
+  function drawMicrocosmos() {
+    mCtx.clearRect(0, 0, mW, mH);
+    // draw connections between nearby cells
+    for (let i = 0; i < microCells.length; i++) {
+      for (let j = i + 1; j < microCells.length; j++) {
+        const a = microCells[i], b = microCells[j];
+        const dx = a.x - b.x, dy = a.y - b.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 120) {
+          mCtx.strokeStyle = `rgba(${a.color.cell},${(1 - dist / 120) * .06})`;
+          mCtx.lineWidth = .5;
+          mCtx.beginPath();
+          mCtx.moveTo(a.x, a.y);
+          mCtx.lineTo(b.x, b.y);
+          mCtx.stroke();
+        }
+      }
+    }
+    microCells.forEach(c => { const p = c.update(); c.draw(p); });
+    requestAnimationFrame(drawMicrocosmos);
+  }
+  drawMicrocosmos();
+
+  window.addEventListener('resize', () => { resizeMicro(); initMicrocosmos(); });
+
+  /* ══════════════════════════════════════
+     AMBIENT AUDIO LOOP
+     ══════════════════════════════════════ */
+  const audio = new Audio('ambient.mp3');
+  audio.loop = true;
+  audio.volume = 0.4;
+  let audioPlaying = false;
+
+  const audioToggle = document.createElement('div');
+  audioToggle.id = 'audio-toggle';
+  audioToggle.innerHTML = '<span>♪</span>';
+  Object.assign(audioToggle.style, {
+    position:'fixed', bottom:'clamp(20px,4vh,40px)', left:'clamp(20px,3vw,40px)',
+    zIndex:50, width:'36px', height:'36px', borderRadius:'50%',
+    background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.1)',
+    color:'rgba(255,255,255,.25)', cursor:'pointer',
+    display:'grid', placeItems:'center',
+    fontFamily:'sans-serif', fontSize:'14px',
+    transition:'all .3s ease',
+    backdropFilter:'blur(4px)',
+  });
+  document.body.appendChild(audioToggle);
+
+  audioToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (audioPlaying) {
+      audio.pause();
+      audioPlaying = false;
+      audioToggle.style.borderColor = 'rgba(255,255,255,.1)';
+      audioToggle.style.color = 'rgba(255,255,255,.25)';
+      audioToggle.innerHTML = '<span>♪</span>';
+    } else {
+      audio.play();
+      audioPlaying = true;
+      audioToggle.style.borderColor = 'rgba(76,175,80,.6)';
+      audioToggle.style.color = 'rgba(76,175,80,.9)';
+      audioToggle.innerHTML = '<span>♫</span>';
+    }
+  });
+
+  // Auto-start on first interaction
+  document.addEventListener('click', () => {
+    if (!audioPlaying) {
+      audio.play();
+      audioPlaying = true;
+      audioToggle.style.borderColor = 'rgba(76,175,80,.6)';
+      audioToggle.style.color = 'rgba(76,175,80,.9)';
+      audioToggle.innerHTML = '<span>♫</span>';
+    }
+  }, { once: true });
+
+  // Resume audio if page becomes visible again
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && audioPlaying) {
+      audio.play();
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
