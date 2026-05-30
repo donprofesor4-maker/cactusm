@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<style>
+.frame{transform-box:fill-box;transform-origin:center;opacity:0;animation:fin .5s cubic-bezier(.4,0,.2,1) forwards}
+.disc{transform-box:fill-box;transform-origin:center;animation:round .7s cubic-bezier(.4,0,.2,1) .3s both}
+.blades{transform-box:fill-box;transform-origin:center;opacity:0;animation:bin .7s cubic-bezier(.34,1.2,.4,1) .9s forwards}
+.opening{transform-box:fill-box;transform-origin:center;transform:scale(0);animation:iris .6s cubic-bezier(.34,1.3,.5,1) 1.4s forwards}
+@keyframes fin{from{opacity:0;transform:scale(.6) rotate(-12deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes round{from{rx:0px;transform:rotate(-35deg)}to{rx:24px;transform:rotate(0)}}
+@keyframes bin{from{opacity:0;transform:rotate(45deg)}to{opacity:1;transform:rotate(0)}}
+@keyframes iris{from{transform:scale(0)}to{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.frame,.disc,.blades,.opening{animation:none!important;opacity:1!important;transform:none!important}.disc{rx:24px}}
+</style>
+<defs>
+<clipPath id="d"><circle cx="32" cy="32" r="24"/></clipPath>
+</defs>
+<rect class="frame" width="64" height="64" rx="14" fill="#0c1a10"/>
+<rect class="disc" x="8" y="8" width="48" height="48" fill="#327f39"/>
+<g class="blades" clip-path="url(#d)">
+<polygon points="32,21 41.53,26.5 55.97,33.26 45.07,11.87" fill="#5cbf63"/>
+<polygon points="41.53,26.5 41.53,37.5 42.9,53.38 55.97,33.26" fill="#52b259"/>
+<polygon points="41.53,37.5 32,43 18.93,52.13 42.9,53.38" fill="#48a550"/>
+<polygon points="32,43 22.47,37.5 8.03,30.74 18.93,52.13" fill="#3f9947"/>
+<polygon points="22.47,37.5 22.47,26.5 21.1,10.62 8.03,30.74" fill="#378d3f"/>
+<polygon points="22.47,26.5 32,21 45.07,11.87 21.1,10.62" fill="#327f39"/>
+</g>
+<polygon class="opening" points="32,21 41.53,26.5 41.53,37.5 32,43 22.47,37.5 22.47,26.5" fill="#0c1a10"/>
+</svg>
