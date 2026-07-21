@@ -87,6 +87,27 @@ html,body{width:100%;height:100%;background:#040a05;overflow:hidden}
 /* ─── AUDIO TOGGLE ─── */
 #audio-toggle:hover{background:rgba(255,255,255,.08)!important;border-color:rgba(255,255,255,.2)!important}
 #audio-toggle:active{transform:scale(.92)}
+
+/* ─── SITE FOOTER ─── */
+.site-footer{
+  position:relative;z-index:30;width:100%;padding:clamp(24px,4vh,48px) clamp(20px,3vw,40px);
+  display:flex;flex-direction:column;align-items:center;gap:clamp(12px,2vh,20px);
+  background:linear-gradient(to top,#020802,rgba(4,10,5,.95),transparent);
+  font-family:'Bebas Neue',sans-serif;letter-spacing:.25em;text-transform:uppercase;
+  opacity:0;animation:fade-up-simple .8s 1.2s forwards;pointer-events:none
+}
+.site-footer .nav-row{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(16px,3vw,32px)}
+.site-footer .nav-row a{
+  pointer-events:auto;color:rgba(255,255,255,.5);text-decoration:none;
+  font-size:clamp(11px,1.2vw,14px);transition:color .3s ease
+}
+.site-footer .nav-row a:hover{color:#4caf50}
+.site-footer .nav-row a.active{color:#fff;text-shadow:0 0 8px rgba(76,175,80,.45)}
+.site-footer .brand{
+  font-family:'Great Vibes',cursive;font-size:clamp(18px,2.5vw,28px);
+  color:rgba(255,255,255,.35);letter-spacing:.08em;text-transform:none
+}
+.site-footer .copy{font-size:clamp(9px,.9vw,11px);color:rgba(255,255,255,.2)}
 </style>
 </head>
 <body>
@@ -195,6 +216,19 @@ html,body{width:100%;height:100%;background:#040a05;overflow:hidden}
       <div class="vignette"></div>
       <div class="grain"></div>
     </section>
+
+    <!-- ─── FOOTER ─── -->
+    <footer class="site-footer">
+      <nav class="nav-row">
+        <a href="#maternal">Maternal</a>
+        <a href="#preescolar">Preescolar</a>
+        <a href="#primaria" class="active">Primaria</a>
+        <a href="#secundaria">Secundaria</a>
+        <a href="#preparatoria">Preparatoria</a>
+      </nav>
+      <div class="brand">Cactus Multimedia</div>
+      <div class="copy"> © 2026 Todos los derechos reservados</div>
+    </footer>
 
   </div>
 </div>
